@@ -1,0 +1,16 @@
+<div>
+  <ul class="nav nav-tabs">
+    @for (tab of tabs; track tab.id) {
+
+    <li [class.active]="tab.active">
+      <a href="#" class="tab" (click)="selectTab(tab)">
+        <span>{{ tab.title }}</span>
+        <span class="close" (click)="closeTab(tab.id)">&times;</span>
+      </a>
+    </li>
+    }
+  </ul>
+  <div class="tab-content">
+    <ng-content></ng-content>
+  </div>
+</div>

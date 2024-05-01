@@ -1,0 +1,16 @@
+.tab {
+  cursor: pointer;
+  display: inline-block;
+  padding: 0.625em;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1em;
+}
+
+.tab-content {
+  padding: 2em;
+  border: 1px solid #000;
+}
