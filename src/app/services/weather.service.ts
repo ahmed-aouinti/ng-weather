@@ -1,5 +1,6 @@
 import { Injectable, Signal, inject, signal } from "@angular/core";
-import { Observable } from "rxjs";
+import { Observable, of } from "rxjs";
+import { tap } from "rxjs/operators";
 
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { CurrentConditions } from "../models/current-conditions.type";
@@ -7,6 +8,10 @@ import { ConditionsAndZip } from "../models/conditions-and-zip.type";
 import { Forecast } from "../models/forecast.type";
 import { LocationService } from "./location.service";
 import { NgToastService } from "ng-angular-popup";
+import { DataCacheService } from "./data-cache.service";
+
+const CONDITION = "condition_";
+const FORECAST = "forecast_";
 
 @Injectable({ providedIn: "root" })
 export class WeatherService {
@@ -19,6 +24,7 @@ export class WeatherService {
   private readonly http = inject(HttpClient);
   private readonly locationService = inject(LocationService);
   private readonly toast = inject(NgToastService);
+  private readonly dataCacheService = inject(DataCacheService);
 
   constructor() {
     this.locationService.locations$.subscribe((locations) =>
@@ -43,6 +49,14 @@ export class WeatherService {
   }
 
   private addCurrentConditions(zipcode: string): void {
+    const cachedCondition: CurrentConditions = this.dataCacheService.getItem(
+      CONDITION + zipcode
+    )?.data;
+
+    if (cachedCondition) {
+      this.updateConditions(zipcode, cachedCondition);
+      return;
+    }
     // Here we make a request to get the current conditions data from the API. Note the use of backticks and an expression to insert the zipcode
     this.http
       .get<CurrentConditions>(
@@ -50,10 +64,9 @@ export class WeatherService {
       )
       .subscribe(
         (data) => {
-          this.currentConditions.update((conditions) => [
-            ...conditions,
-            { zip: zipcode, data },
-          ]);
+          const condition: ConditionsAndZip = { zip: zipcode, data };
+          this.saveInCache(CONDITION + zipcode, condition);
+          this.updateConditions(zipcode, data);
         },
         (error: HttpErrorResponse) => {
           // Handle error
@@ -80,10 +93,30 @@ export class WeatherService {
   }
 
   getForecast(zipcode: string): Observable<Forecast> {
-    // Here we make a request to get the forecast data from the API. Note the use of backticks and an expression to insert the zipcode
-    return this.http.get<Forecast>(
-      `${WeatherService.URL}/forecast/daily?zip=${zipcode},us&units=imperial&cnt=5&APPID=${WeatherService.APPID}`
+    const cachedForecast: Forecast = this.dataCacheService.getItem(
+      FORECAST + zipcode
     );
+
+    if (cachedForecast) {
+      return of(cachedForecast);
+    }
+    // Here we make a request to get the forecast data from the API. Note the use of backticks and an expression to insert the zipcode
+    return this.http
+      .get<Forecast>(
+        `${WeatherService.URL}/forecast/daily?zip=${zipcode},us&units=imperial&cnt=5&APPID=${WeatherService.APPID}`
+      )
+      .pipe(tap((forecast) => this.saveInCache(FORECAST + zipcode, forecast)));
+  }
+
+  private updateConditions(zip: string, data: CurrentConditions) {
+    this.currentConditions.update((conditions) => [
+      ...conditions,
+      { zip, data },
+    ]);
+  }
+
+  private saveInCache<T>(key: string, data: T) {
+    this.dataCacheService.setCachedItem(key, data);
   }
 
   getWeatherIcon(id: number): string {

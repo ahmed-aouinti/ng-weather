@@ -2,6 +2,7 @@ import { Injectable, WritableSignal, inject, signal } from "@angular/core";
 import { Observable } from "rxjs";
 import { toObservable } from "@angular/core/rxjs-interop";
 import { NgToastService } from "ng-angular-popup";
+import { DataCacheService } from "./data-cache.service";
 
 export const LOCATIONS: string = "locations";
 
@@ -9,10 +10,12 @@ export const LOCATIONS: string = "locations";
 export class LocationService {
   private locationsSignal: WritableSignal<string[]> = signal<string[]>([]);
   locations$: Observable<string[]> = toObservable(this.locationsSignal);
+
   private toast = inject(NgToastService);
+  private dataCacheService = inject(DataCacheService);
 
   constructor() {
-    let locString = localStorage.getItem(LOCATIONS);
+    let locString = this.dataCacheService.getItem(LOCATIONS);
     if (locString) {
       const locations = JSON.parse(locString);
       this.locationsSignal.set(locations);
@@ -29,7 +32,9 @@ export class LocationService {
         duration: 4000,
         position: "topRight",
       });
-    } else this.updateLocations([...this.locationsSignal(), zipcode]);
+    } else {
+      this.updateLocations([...this.locationsSignal(), zipcode]);
+    }
   }
 
   removeLocation(zipcode: string): void {
@@ -39,6 +44,6 @@ export class LocationService {
 
   private updateLocations(locations: string[]): void {
     this.locationsSignal.set(locations);
-    localStorage.setItem(LOCATIONS, JSON.stringify(locations));
+    this.dataCacheService.setItem(LOCATIONS, JSON.stringify(locations));
   }
 }

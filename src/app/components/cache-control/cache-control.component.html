@@ -1,0 +1,16 @@
+<div class="cache-control">
+  <label for="cacheDuration">Cache Duration (seconds):</label>
+  <input
+    type="number"
+    id="cacheDuration"
+    value="{{ currentCacheDuration }}"
+    #inputDuration
+    min="0"
+  />
+  <button (click)="cacheDuration = inputDuration.value">
+    Edit Cache Duration
+  </button>
+  <div *ngIf="!cacheDurationValid" class="error-message">
+    Invalid cache duration. Please enter a positive number.
+  </div>
+</div>

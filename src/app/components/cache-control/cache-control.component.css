@@ -1,0 +1,30 @@
+.cache-control {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  margin: 10px;
+}
+
+.cache-control label {
+  font-weight: bold;
+}
+
+.cache-control input,
+.cache-control button {
+  padding: 6px 12px;
+  margin: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.cache-control button {
+  cursor: pointer;
+  background-color: #f0f0f0;
+}
+
+.cache-control .error-message {
+  color: red;
+  font-size: smaller;
+  margin-top: 5px;
+}
